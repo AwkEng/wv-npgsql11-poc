@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Npgsql11Multiplexing</RootNamespace>
+    <!--
+      Npgsql 11.0.0 removes NpgsqlConnectionStringBuilder.Multiplexing and
+      .WriteCoalescingBufferThresholdBytes, which Wolverine.Postgresql still reads from
+      PostgresqlMessageStore.Describe(). Wolverine therefore cannot start on Npgsql 11.
+
+      Reproduce:   dotnet run                      (Npgsql 11.0.0 -> MissingMethodException, exit 42)
+      Control:     dotnet run -p:NPG=10.0.4        (same code, Describe() returns, host reaches the socket)
+
+      The control also prints the two diagnostics entries Wolverine reports, which is what a plain removal
+      of the two reads would silently lose: Multiplexing=False and WriteCoalescingBufferThresholdBytes=1000.
+    -->
+    <NPG Condition="'$(NPG)' == ''">11.0.0</NPG>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WolverineFx" Version="6.64.2" />
+    <PackageReference Include="WolverineFx.Postgresql" Version="6.64.2" />
+    <PackageReference Include="WolverineFx.RuntimeCompilation" Version="6.64.2" />
+    <PackageReference Include="Npgsql" Version="$(NPG)" />
+  </ItemGroup>
+
+</Project>
